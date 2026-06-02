@@ -12,7 +12,7 @@ def load_data():
     
     # IMPORTANT: Replace this with the RAW GitHub URL of your master_blueprint.csv
     # Example: "https://raw.githubusercontent.com/YourUsername/YourRepo/main/master_blueprint.csv"
-    blueprint_url = "YOUR_RAW_GITHUB_BLUEPRINT_URL_HERE" 
+    blueprint_url = "master_blueprint.csv" 
     
     # Load both dataframes
     df_stock = pd.read_csv(stock_sheet_url)
