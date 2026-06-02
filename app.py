@@ -53,4 +53,96 @@ if selected_clients:
     # C. Merge blueprint with the selected stock counts
     # Using 'left' merge keeps all layout bays visible even if they have no stock
     map_data = pd.merge(
-        df
+        df_blueprint,
+        bay_client_counts,
+        left_on='bay_name',
+        right_on='Bay',
+        how='left'
+    )
+    
+    # D. Define the status for coloring
+    def determine_map_status(row):
+        if pd.isna(row['Selected_Client_Count']) or row['Selected_Client_Count'] == 0:
+            return 0 # No Selected Stock
+        elif row['Selected_Client_Count'] == 1:
+            return 1 # Single Client
+        else:
+            return 2 # Shared Location
+            
+    map_data['Map_Status_Id'] = map_data.apply(determine_map_status, axis=1)
+
+    status_map = {0: "No Selected Stock", 1: "Single Client", 2: "Shared (Multiple Clients)"}
+    map_data['Bay_Status'] = map_data['Map_Status_Id'].map(status_map)
+
+    # --- 4. VISUALIZATION (HEATMAP GRID) ---
+    st.subheader("📍 Warehouse Layout Map")
+    
+    if 'grid_col' in map_data.columns and 'grid_row' in map_data.columns:
+        
+        # Pivot the data: Rows are grid_row, Cols are grid_col, Values are status ID
+        grid_pivot = map_data.pivot(index='grid_row', columns='grid_col', values='Map_Status_Id')
+        
+        # Pivot another one for the hover text (Bay Names)
+        text_pivot = map_data.pivot(index='grid_row', columns='grid_col', values='bay_name')
+
+        # Define custom discrete colorscale
+        colorscale = [
+            [0, '#e0e0e0'],   # Light Gray (No stock)
+            [0.5, '#1f77b4'], # Blue (Single)
+            [1, '#ff4b4b']    # Red (Shared)
+        ]
+
+        # Create Heatmap
+        fig = go.Figure(data=go.Heatmap(
+            z=grid_pivot.values,
+            x=grid_pivot.columns,
+            y=grid_pivot.index,
+            colorscale=colorscale,
+            showscale=False, 
+            xgap=1, 
+            ygap=1, 
+            hoverinfo='text',
+            text=text_pivot.values 
+        ))
+
+        fig.update_layout(
+            title="Warehouse Grid (Red = Shared, Gray = Empty/Other)",
+            xaxis=dict(title="Column", tickmode='linear'),
+            yaxis=dict(title="Row", tickmode='linear', autorange="reversed"), 
+            width=1200,
+            height=700,
+            plot_bgcolor='black' # Background set to black for empty space/aisles
+        )
+        
+        # Lock aspect ratio so bays remain square
+        fig.update_yaxes(scaleanchor="x", scaleratio=1)
+
+        # Custom Legend (Using <b> tags instead of dictionary parameter)
+        fig.add_annotation(xref="paper", yref="paper", x=1.02, y=0.9, text="<b>Legend:</b>", showarrow=False, font=dict(size=14))
+        fig.add_annotation(xref="paper", yref="paper", x=1.02, y=0.85, text="▇ Shared", showarrow=False, font=dict(color="#ff4b4b"))
+        fig.add_annotation(xref="paper", yref="paper", x=1.02, y=0.80, text="▇ Single Client", showarrow=False, font=dict(color="#1f77b4"))
+        fig.add_annotation(xref="paper", yref="paper", x=1.02, y=0.75, text="▇ No Selected Stock", showarrow=False, font=dict(color="#bdbdbd"))
+
+        st.plotly_chart(fig, use_container_width=True)
+            
+    else:
+        st.error("Could not find grid coordinates in blueprint.")
+
+    # --- 5. PICK SHEETS DATA TABLE ---
+    st.subheader("📄 Generated Pick Data")
+    table_df = pd.merge(filtered_stock, bay_client_counts, on='Bay', how='left')
+    table_df['Bay_Status'] = table_df['Selected_Client_Count'].apply(lambda x: "Shared" if x > 1 else "Single")
+    
+    st.dataframe(table_df[['Client', 'Bay', 'Location_Full_Name', 'SKU', 'Items_In_Location', 'Bay_Status']], use_container_width=True)
+    
+    # Download Button
+    csv = table_df[['Client', 'Bay', 'Location_Full_Name', 'SKU', 'Items_In_Location', 'Bay_Status']].to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="⬇️ Download Pick Sheet (CSV)",
+        data=csv,
+        file_name='warehouse_pick_sheet.csv',
+        mime='text/csv',
+    )
+    
+else:
+    st.info("👆 Please select clients to visualize the layout.")
