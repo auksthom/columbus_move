@@ -107,13 +107,13 @@ if selected_clients:
             text=text_pivot.values # Show Bay Name on hover
         ))
 
-        fig.update_layout(
+       fig.update_layout(
             title="Warehouse Grid (Red = Shared, Gray = Empty/Other)",
             xaxis=dict(title="Column", tickmode='linear'),
-            yaxis=dict(title="Row", tickmode='linear', autorange="reversed"), # Row 1 at top
+            yaxis=dict(title="Row", tickmode='linear', autorange="reversed"), 
             width=1200,
             height=700,
-            plot_bgcolor='white' # White background makes gray cells pop
+            plot_bgcolor='black' # <-- Changed this to black
         )
         
         # Maintain square aspect ratio so it looks like a floor plan
