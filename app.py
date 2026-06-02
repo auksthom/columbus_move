@@ -119,11 +119,11 @@ if selected_clients:
         # Maintain square aspect ratio so it looks like a floor plan
         fig.update_yaxes(scaleanchor="x", scaleratio=1)
 
-        # Add a custom legend using annotations (since native discrete legend is hard on heatmaps)
-        fig.add_annotation(xref="paper", yref="paper", x=1.02, y=0.9, text="Legend:", showarrow=False, font=dict(size=14, bed=True))
+        # Custom Legend
+        fig.add_annotation(xref="paper", yref="paper", x=1.02, y=0.9, text="<b>Legend:</b>", showarrow=False, font=dict(size=14))
         fig.add_annotation(xref="paper", yref="paper", x=1.02, y=0.85, text="▇ Shared", showarrow=False, font=dict(color="#ff4b4b"))
         fig.add_annotation(xref="paper", yref="paper", x=1.02, y=0.80, text="▇ Single Client", showarrow=False, font=dict(color="#1f77b4"))
-        fig.add_annotation(xref="paper", yref="paper", x=1.02, y=0.75, text="▇ No Selected Stock", showarrow=False, font=dict(color="#bdbdbd")) # Slightly darker gray for legend text legibility
+        fig.add_annotation(xref="paper", yref="paper", x=1.02, y=0.75, text="▇ No Selected Stock", showarrow=False, font=dict(color="#bdbdbd"))
 
         st.plotly_chart(fig, use_container_width=True)
             
